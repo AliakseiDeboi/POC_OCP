@@ -1,45 +1,45 @@
-import { OPCUAClient, AttributeIds, DataType } from "node-opcua";
+import { OPCUAClient, AttributeIds } from "node-opcua";
 
-const connectionURL = "opc.tcp://localhost:3000/UA/POCServer";
+const connectionURL = "opc.tcp://opcua-server:3000/UA/POCServer";
 
-const startClient = async () => {
-  const client = OPCUAClient.create({ endpointMustExist: false });
+class OPCUAClientService {
+  constructor() {
+    this.client = OPCUAClient.create({
+      autoAcceptUnknownCertificate: true,
+      endpointMustExist: false
+    });
+    this.session = null;
+  }
 
-  await client.connect(connectionURL);
+  async connect() {
+    await this.client.connect(connectionURL);
+    this.session = await this.client.createSession();
+    console.log("Connected to OPC UA server");
+  }
 
-  const session = await client.createSession();
-
-  const nodeId = "ns=1;s=Counter"; 
-
-  //getter
-  const readCounter = async () => {
-    const dataValue = await session.read({
+  async readCounter() {
+    const nodeId = "ns=1;s=Counter";
+    const dataValue = await this.session.read({
       nodeId: nodeId,
       attributeId: AttributeIds.Value,
     });
-
-    console.log("Current counter:", dataValue.value.value);
+    return dataValue.value.value;
   }
 
-  //setter
-  const setCounter = async () => {
-    const answer = await session.write([{
-        nodeId,
-        attributeId: AttributeIds.Value,
-        indexRange: null,
-        value: { 
-            value: { 
-                dataType: DataType.Double,
-                value: 34
-            }
-        }
-    }]);
-    }
+  async writeCounter(value) {
+    const nodeId = "ns=1;s=Counter";
+    await this.session.writeSingleNode(nodeId, { dataType: "Double", value });
+  }
 
-  //Fetching the data every 2 sec
-  setInterval(readCounter, 2000);
+  async test() {
+    return 'exists';
+  }
 
-  await setCounter();
+  async disconnect() {
+    await this.session.close();
+    await this.client.disconnect();
+    console.log("Disconnected from OPC UA server");
+  }
 }
 
-startClient();
+export default new OPCUAClientService();

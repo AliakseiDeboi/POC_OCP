@@ -1,6 +1,8 @@
 import { OPCUAServer, Variant, DataType, NodeId, NodeIdType, StatusCodes } from "node-opcua";
 
-const startServer = async () => {
+export let counter = 1;
+
+export const startServer = async () => {
   const server = new OPCUAServer({
     port: 3000,
     resourcePath: "/UA/POCServer",
@@ -18,8 +20,6 @@ const startServer = async () => {
 
   const nodeId = new NodeId(NodeIdType.STRING, 'Counter', 1);
 
-  let counter = 1;
-
   namespace.addVariable({
     componentOf: device,
     browseName: "Counter",
@@ -34,14 +34,9 @@ const startServer = async () => {
     },
   });
 
-  //Let's change counter as a simulation of data change
-  setInterval(() => {
-    counter += Math.random() * 2 - 1;
-  }, 1000);
-
   await server.start();
 
-  console.log("Server is listening on port 3000...");
+  console.log("OPC Server is listening on port 3000...");
 }
 
 startServer();

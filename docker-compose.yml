@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  opcua-server:
+    build: ./
+    ports: 
+      - "3000:3000"
+    networks:
+      - opcua-net  
+    command: ["node", "opcServer.js"]   
+  app:
+    build: ./
+    ports:
+      - "3001:3001"
+    depends_on:
+      - opcua-server
+      - mongo
+    networks:
+      - opcua-net    
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/poc_opc
+    command: ["sh", "-c", "sleep 3 && node index.js"]  
+  mongo:
+    image: mongo@latest
+    networks:
+      - opcua-net  
+    ports:
+      - "27017:27017" 
+    volumes:
+      - mongo_data:/data/db
+networks:
+  opcua-net:
+    driver: bridge      
+volumes:
+  mongo_data:
